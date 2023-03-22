@@ -13,7 +13,7 @@ Tools used:
 
 1. Lambda and Streams
     - Lambda Expressions and Functional Interfaces
-    - Streams, Parallel Streams
+    - Exploring `java.util.function` package
 2. Concurrency
     - Threading fundamentals - creation and coordination
     - Thread pools
@@ -141,4 +141,13 @@ Hello Students!!
 HELLO STUDENTS!!
 hello students!!
 ```
+
+#### Exploring `java.util.function` package
+
+JDK has more than 40 interfaces in `java.util.function` package organized in 4 categories:
+
+- Supplier
+- Consumer
+- Predicate
+- Function
 
