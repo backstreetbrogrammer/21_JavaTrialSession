@@ -4,7 +4,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class FirstLambda {
+public class LambdaDemo {
 
     public static void main(final String[] args) {
         // Supplier

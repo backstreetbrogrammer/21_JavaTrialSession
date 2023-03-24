@@ -75,7 +75,7 @@ Complete source code:
 ```java
 import java.util.function.Supplier;
 
-public class FirstLambda {
+public class LambdaDemo {
 
     public static void main(final String[] args) {
         final Supplier<String> supplier = () -> "Hello Students!!";
@@ -99,7 +99,7 @@ Another example using **Consumer**:
 public interface Consumer<T> {
     void accept(T t);
 
-    default Consumer<T> andThen(Consumer<? super T> after) {
+    default Consumer<T> andThen(final Consumer<? super T> after) {
         Objects.requireNonNull(after);
         return (T t) -> {
             accept(t);
@@ -116,7 +116,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class FirstLambda {
+public class LambdaDemo {
 
     public static void main(final String[] args) {
         // Supplier
@@ -142,6 +142,8 @@ HELLO STUDENTS!!
 hello students!!
 ```
 
+![Lambda Syntax](LambdaSyntax.PNG)
+
 #### Exploring `java.util.function` package
 
 JDK has more than 40 interfaces in `java.util.function` package organized in 4 categories:
@@ -150,4 +152,212 @@ JDK has more than 40 interfaces in `java.util.function` package organized in 4 c
 - Consumer
 - Predicate
 - Function
+
+#### Supplier
+
+The `Supplier`
+
+- does not take any argument
+- produces a value
+
+```java
+public interface Supplier<T> {
+    T get();
+}
+```
+
+```
+Supplier<String> supplier = () -> "Hello";
+```
+
+#### Consumer
+
+The `Consumer`
+
+- takes any argument
+- does not return anything
+
+```java
+public interface Consumer<T> {
+    void accept(T t);
+}
+```
+
+```
+Consumer<String> consumer = s -> System.out.println(s);
+```
+
+#### Predicate
+
+The `Predicate`
+
+- takes any argument
+- returns a **boolean**
+
+Used to filter data.
+
+```java
+public interface Predicate<T> {
+    boolean test(T t);
+}
+```
+
+```
+Predicate<String> isEmpty = s -> s.isEmpty();
+```
+
+#### Function
+
+The `Function`
+
+- takes any argument
+- returns any type
+
+Used to map data.
+
+```java
+public interface Function<T, R> {
+    R apply(T t);
+}
+```
+
+```
+Function<Student, String> getStudentId = student -> student.getId();
+```
+
+#### Runnable
+
+Although `Runnable` interface lies in `java.lang` package, it is still a functional interface. Thus, any interface which
+has ONLY ONE abstract method is always a functional interface and annotating with `@FunctionalInterface` is optional.
+
+The `Runnable`
+
+- does not take any argument
+- does not return anything
+
+Used for defining thread task.
+
+```java
+public interface Runnable {
+    void run();
+}
+```
+
+```
+Runnable runMe = () -> System.out.println("I am running in a separate thread");
+```
+
+#### Interview Problem 1 (Societe Generale): Demonstrate functional interfaces in code
+
+Given a **Java POJO**:
+
+```java
+public class Student {
+
+    private String name;
+
+    public Student(final String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "name='" + name + '\'' +
+                '}';
+    }
+
+}
+```
+
+1. Print all students using `Consumer`
+2. Print all students names using `Function` and `Consumer`
+3. Print all students names starting with **'T'** using `Predicate` and `Consumer`
+
+**Solution**:
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+public class FunctionalInterfacesDemo {
+
+    public static void main(final String[] args) {
+        final var john = new Student("John");
+        final var mary = new Student("Mary");
+        final var thomas = new Student("Thomas");
+        final var rahul = new Student("Rahul");
+        final var jenny = new Student("Jenny");
+        final var tatiana = new Student("Tatiana");
+
+        final var students = List.of(john, mary, thomas, rahul, jenny, tatiana);
+        System.out.println("1. Print all students using Consumer~>");
+        // Consumer
+        students.forEach(student -> System.out.println(student));
+        System.out.println("----------------------");
+
+        final List<String> names = new ArrayList<>();
+
+        // Function
+        final Function<Student, String> toName = (Student student) -> student.getName();
+
+        // Consumer
+        students.forEach(student -> {
+            final String name = toName.apply(student); // Function mapping
+            names.add(name);
+        });
+
+        System.out.println("2. Print all students names using Function and Consumer~>");
+        names.forEach(name -> System.out.println(name));
+        System.out.println("----------------------");
+
+        // Predicate
+        final Predicate<String> startsWithT = name -> !name.startsWith("T");
+        names.removeIf(startsWithT);
+        // OR,
+        // names.removeIf(name -> !name.startsWith("T")); // inline
+
+        System.out.println("3. Print all students names starting with 'T' using Predicate and Consumer~>");
+        // Consumer
+        names.forEach(name -> System.out.println(name));
+        System.out.println("----------------------");
+    }
+
+}
+```
+
+**Output**:
+
+```
+1. Print all students using Consumer~>
+Student{name='John'}
+Student{name='Mary'}
+Student{name='Thomas'}
+Student{name='Rahul'}
+Student{name='Jenny'}
+Student{name='Tatiana'}
+----------------------
+2. Print all students names using Function and Consumer~>
+John
+Mary
+Thomas
+Rahul
+Jenny
+Tatiana
+----------------------
+3. Print all students names starting with 'T' using Predicate and Consumer~>
+Thomas
+Tatiana
+----------------------
+```
 
