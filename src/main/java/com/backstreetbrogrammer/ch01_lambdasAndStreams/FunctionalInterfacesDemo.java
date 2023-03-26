@@ -8,12 +8,12 @@ import java.util.function.Predicate;
 public class FunctionalInterfacesDemo {
 
     public static void main(final String[] args) {
-        final var john = new Student("John");
-        final var mary = new Student("Mary");
-        final var thomas = new Student("Thomas");
-        final var rahul = new Student("Rahul");
-        final var jenny = new Student("Jenny");
-        final var tatiana = new Student("Tatiana");
+        final var john = new Student("John", 18);
+        final var mary = new Student("Mary", 16);
+        final var thomas = new Student("Thomas", 21);
+        final var rahul = new Student("Rahul", 23);
+        final var jenny = new Student("Jenny", 17);
+        final var tatiana = new Student("Tatiana", 25);
 
         final var students = List.of(john, mary, thomas, rahul, jenny, tatiana);
         System.out.println("1. Print all students using Consumer~>");
