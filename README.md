@@ -14,6 +14,8 @@ Tools used:
 1. Lambda and Streams
     - Lambda Expressions and Functional Interfaces
     - Exploring `java.util.function` package
+    - Lambdas vs Anonymous classes
+    - Chaining and Composing Lambdas
 2. Concurrency
     - Threading fundamentals - creation and coordination
     - Thread pools
@@ -360,4 +362,135 @@ Thomas
 Tatiana
 ----------------------
 ```
+
+#### Lamdas vs Anonymous classes
+
+Prior to Java 8, the primary means of creating a **function object** was the **anonymous class**.
+
+Code Snippet to sort a list of strings in order of length using an anonymous class to create the sort's comparison
+function (which imposes the sort order):
+
+```
+        Collections.sort(words, new Comparator<String>() {
+            @Override
+            public int compare(final String s1, final String s2) {
+                return Integer.compare(s1.length(), s2.length());
+            }
+        });
+```
+
+Lambdas are similar in function to anonymous class, but far more concise.
+
+```
+        Collections.sort(words, (s1, s2) -> Integer.compare(s1.length(), s2.length()));
+        // OR
+        Collections.sort(words, Comparator.comparingInt(String::length));
+        // OR
+        words.sort(Comparator.comparingInt(String::length));
+```
+
+The most important difference is in the **performance** => lambdas are more than **60 times faster** than anonymous
+classes!
+
+The reason is the way the Java compiler compiles the lambdas versus the anonymous classes.
+
+Java compiler uses a special `invokedynamic` call to compile lambdas and thus the compiled code is different and much
+faster.
+
+Other reason is automatic **"boxing"** and **"unboxing"** of primitives and their wrapper classes.
+
+For ex:
+
+```
+        Comparator<Integer> cmp = (i1, i2) -> Integer.compare(i1, i2);
+        int compared = cmp.compare(5, 10);
+```
+
+Comparator interface:
+
+```java
+public interface Comparator<T> {
+    int compare(T o1, T o2);
+}
+```
+
+So above code will be interpreted as when we call compare method: `int compared = cmp.compare(5, 10);`
+
+```java
+public interface Comparator<Integer> {
+    int compare(Integer o1, Integer o2);
+}
+```
+
+Firstly, **boxing** will be done to promote primitive `int` 5 and 10 to `Integer`.
+
+After the comparison, resulting `Integer` (a negative integer, zero, or a positive integer as the first argument is less
+than, equal to, or greater than the second) will be converted back or **unboxed** to primitive `int`.
+
+If this code is called on millions of integers => this will badly impact the performance.
+
+Thus, to overcome this - a set of functional interfaces are added for primitive types which can be used by lambdas, for
+ex:
+
+- `IntPredicate`
+- `LongSupplier`
+- `IntFunction<T>`
+- `LongToIntFunction`
+
+Just taking an example again, in the `Supplier` interface, we have a generic type `T` returned via `get()` method.
+
+```java
+public interface Supplier<T> {
+    T get();
+}
+```
+
+However, for `LongSupplier` interface, we can directly get primitive `long` via `getAsLong()` method as return value
+without any need to **box** it to wrapper `Long`.
+
+```java
+public interface LongSupplier {
+    long getAsLong();
+}
+```
+
+Similarly, for `DoubleToIntFunction` interface, we can directly work with primitives to create the function to
+convert `double` to `int`.
+
+```java
+public interface DoubleToIntFunction {
+    int applyAsInt(double value);
+}
+```
+
+Complete Java code example to illustrate this:
+
+```java
+import java.util.function.DoubleToIntFunction;
+import java.util.function.LongSupplier;
+
+public class PrimitiveLambdas {
+
+    public static void main(final String[] args) {
+        final LongSupplier supplier = () -> 10L;
+        final long i = supplier.getAsLong();
+        System.out.printf("i = %d%n", i);
+
+        final DoubleToIntFunction function = value -> (int) Math.ceil(value);
+        final int pi = function.applyAsInt(Math.PI);
+        System.out.printf("PI = %d%n", pi);
+    }
+
+}
+```
+
+**Output**:
+
+```
+i = 10
+PI = 4
+```
+
+#### Chaining and Composing Lambdas
+
 
