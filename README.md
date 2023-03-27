@@ -722,6 +722,29 @@ of the concurrent units, which can significantly improve overall speed of the ex
 systems. It may also refer to the _decomposability_ of a program, algorithm, or problem into order-independent or
 partially-ordered components or units of computation.
 
+- Case 1: CPU with only one core
+
+CPU will be executing processes one by one, individually by **time slice**. A time slice is short time frame that gets
+assigned to process for CPU execution.
+
+- Case 2: CPU with multiple cores
+
+Only on multicore CPU system, multiple processes execute at the **same** time on different cores.
+
+**Scheduler**
+
+CPU Scheduling is a process that allows one process to use the CPU while another process is delayed (in standby) due to
+unavailability of any resources such as I/O etc., thus making full use of the CPU. Whenever the CPU becomes idle, the
+operating system must select one of the processes in the line ready for launch. The selection process is done by a
+temporary (CPU) scheduler. The Scheduler selects between memory processes ready to launch and assigns the CPU to one of
+them.
+
+Scheduler may **pause** a thread due to:
+
+- The thread is waiting for some more data
+- The thread is waiting for another thread to do something
+- CPU should be shared equally among threads
+
 **What is a Java Thread?**
 
 We can define threads as a light-weight **subprocess** within the smallest unit of **processes** and having separate
@@ -731,7 +754,73 @@ thread, that will not affect the working of other threads despite them sharing t
 Few points about Java Thread:
 
 - Thread is a set of instructions defined at Operating System level
-- Lightweight sub-process through which we can perform multiple activities within a single process.
+- Lightweight sub-process through which we can perform multiple activities within a single process
 - An application can be composed of several threads => JVM itself works with several threads like GC, JIT, etc.
 - Different threads can be executed at the **same** time on different cores or cpus
+
+**Race Condition**
+
+By definition, a race condition is a condition of a program where its behavior depends on relative timing or
+interleaving of multiple threads or processes.
+
+In simpler words, it means that two different threads are trying to **read** and **write** the **same** variable at
+the **same** time.
+
+#### Interview Problem 3 (Macquarie, Merrill Lynch): Demonstrate race condition in Singleton pattern and how to fix it
+
+Given source code for Singleton pattern:
+
+```java
+public class SingletonDemo {
+
+    private static SingletonDemo instance;
+
+    private SingletonDemo() {
+    }
+
+    public static SingletonDemo getInstance() {
+        if (instance == null) {
+            instance = new SingletonDemo();
+        }
+        return instance;
+    }
+
+}
+```
+
+Explanation for **race condition**:
+
+Suppose there are 2 threads `T1` and `T2` calling `getInstance()` method at the same time.
+
+- `T1` thread gets CPU time and reaches at point: `if (instance == null)`
+- The thread scheduler pauses `T1`
+- `T2` thread gets CPU time and it passes this line of code and creates new instance: `instance = new SingletonDemo()`
+- The thread scheduler pauses `T2`
+- `T1` thread gets CPU time, and it resumes from `if (instance == null)` check: it will also create a new
+  instance: `instance = new SingletonDemo()`; thus breaking the Singleton pattern contract.
+
+**Solution**:
+
+Use **synchronization**.
+
+Synchronization prevents a block of code to be executed by more than one thread at the same time.
+
+```java
+public class SingletonDemo {
+
+    private static SingletonDemo instance;
+
+    private SingletonDemo() {
+    }
+
+    public static synchronized SingletonDemo getInstance() {
+        if (instance == null) {
+            instance = new SingletonDemo();
+        }
+        return instance;
+    }
+
+}
+```
+
 
