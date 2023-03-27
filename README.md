@@ -17,7 +17,7 @@ Tools used:
     - Lambdas vs Anonymous classes
     - Chaining and Composing Lambdas
 2. Introduction to Concurrency
-    - Threading fundamentals - creation and coordination
+    - Threading fundamentals
     - Thread pools
     - Concurrent Collections
     - Synchronization techniques - Locks and Conditions
@@ -711,4 +711,27 @@ In the real module course - we will cover additional topics on lambdas:
 ---
 
 ### Chapter 02. Introduction to Concurrency
+
+#### Threading fundamentals
+
+In computer science, **concurrency** is the execution of the multiple instruction sequences at the **same** time.
+
+In more technical terms, **concurrency** is the ability of different parts or units of a program, algorithm, or problem
+to be executed out-of-order or in partial order, without affecting the outcome. This allows for **parallel** execution
+of the concurrent units, which can significantly improve overall speed of the execution in multiprocessor and multicore
+systems. It may also refer to the _decomposability_ of a program, algorithm, or problem into order-independent or
+partially-ordered components or units of computation.
+
+**What is a Java Thread?**
+
+We can define threads as a light-weight **subprocess** within the smallest unit of **processes** and having separate
+paths of execution. These threads use shared memory, but they act independently. Hence, if there is an exception in a
+thread, that will not affect the working of other threads despite them sharing the same memory.
+
+Few points about Java Thread:
+
+- Thread is a set of instructions defined at Operating System level
+- Lightweight sub-process through which we can perform multiple activities within a single process.
+- An application can be composed of several threads => JVM itself works with several threads like GC, JIT, etc.
+- Different threads can be executed at the **same** time on different cores or cpus
 
