@@ -18,9 +18,7 @@ Tools used:
     - Chaining and Composing Lambdas
 2. Introduction to Concurrency
     - Threading fundamentals
-    - Thread pools
-    - Concurrent Collections
-    - Synchronization techniques - Locks and Conditions
+    - Thread coordination
 
 ---
 
@@ -823,4 +821,329 @@ public class SingletonDemo {
 }
 ```
 
+For synchronization to work, we need a synchronization object key also called as monitor or mutex - every Java object
+can play as monitor or mutex.
 
+In the `static` method context => Class object is synchronization object key
+
+```
+// SingletonDemo.class => synchronization object key
+public static synchronized SingletonDemo getInstance() {
+   ...
+}
+```
+
+In the `non-static` method context => instance object is synchronization object key
+
+```
+// instance object which invokes this method is synchronization object key
+public synchronized SingletonDemo getInstance() {
+   ...
+}
+```
+
+Or, we can also explicitly use a Java object as synchronization object key using **synchronized block**
+
+```
+// instance object used explicitly as synchronization object key in synchronized block
+public SingletonDemo getInstance() {
+   synchronized(this) {
+     ...
+   }
+}
+```
+
+**Reentrant Lock**
+
+Java locks are **reentrant** => when a thread holds a lock, it can enter a block synchronized on the lock it is holding.
+
+```
+public synchronized SingletonDemo getInstance() {
+   ...
+}
+
+public synchronized void doSomething() {
+   ...
+}
+```
+
+A thread `T1` which has acquired instance lock by entering the `getInstance()` method can also enter `doSomething()`
+method as the instance lock is same for both the methods. Any other thread can **not** acquire the instance lock and
+enter these 2 methods as it's held by thread `T1`.
+
+**Deadlock**
+
+A deadlock is a situation where a thread `T1` holds a key needed by a thread `T2`, and `T2` holds the key needed by
+`T1`. In this situation, both the threads will keep on waiting for each other indefinitely.
+
+There is nothing we can do if the deadlock situation happens but to restart the JVM. However, even identifying a
+deadlock is very complex in the modern JVMs or monitoring tools.
+
+**How to create and run threads in Java?**
+
+The most basic way is to:
+
+- create a `Runnable` instance
+- pass it to the `Thread` constructor
+- invoke `start()` method on `Thread` object
+
+**Example source code**:
+
+```java
+public class CreateThreadDemo {
+
+    public static void main(final String[] args) {
+        final Runnable runnable = () -> System.out.printf("I am running in this thread: %s%n",
+                                                          Thread.currentThread().getName());
+        final Thread thread = new Thread(runnable, "MyThread");
+        thread.start();
+    }
+
+}
+```
+
+**Output**:
+
+```
+I am running in this thread: MyThread
+```
+
+#### Interview Problem 4 (JP Morgan Chase): Demonstrate synchronization issue and fix the code
+
+Given Java Code:
+
+```java
+public class Counter {
+
+    private long counter;
+
+    public Counter(final long counter) {
+        this.counter = counter;
+    }
+
+    public long getCounter() {
+        return counter;
+    }
+
+    public void increment() {
+        counter += 1L;
+    }
+
+}
+```
+
+```java
+public class RaceConditionDemo {
+
+    public static void main(final String[] args) throws InterruptedException {
+        final Counter counter = new Counter(0L);
+        final Runnable r = () -> {
+            for (int i = 0; i < 1_000; i++) {
+                counter.increment();
+            }
+        };
+
+        final Thread[] threads = new Thread[1_000];
+        for (int i = 0; i < threads.length; i++) {
+            threads[i] = new Thread(r);
+            threads[i].start();
+        }
+
+        for (int i = 0; i < threads.length; i++) {
+            threads[i].join();
+        }
+
+        System.out.printf("Counter Value = %d%n", counter.getCounter());
+    }
+
+}
+```
+
+- What is the output of the counter value?
+- Is the output going to be consistent for every run? If not, what is the issue?
+- If any race condition, fix the code
+
+**Solution**:
+
+There is a race condition at `counter.increment()` as 1000 threads are trying to mutate the same variable `counter`
+at the **same** time.
+
+The output of the value will be different for each run.
+
+Sample Outputs on 4 runs:
+
+```
+Counter Value = 994678
+Counter Value = 994715
+Counter Value = 995232
+Counter Value = 980564
+```
+
+We need to synchronize the `increment()` method or synchronize the access to `counter` variable.
+
+```
+    public synchronized void increment() {
+        counter += 1L;
+    }
+```
+
+After synchronizing the `increment()` method, sample output on 4 runs:
+
+```
+Counter Value = 1000000
+Counter Value = 1000000
+Counter Value = 1000000
+Counter Value = 1000000
+```
+
+#### Interview Problem 5 (Goldman Sachs): Demonstrate deadlock issue and fix the code
+
+Write a program to demonstrate deadlock issue where a thread `T1` holds a key needed by a thread `T2`, and `T2` holds
+the key needed by `T1`. Fix the code.
+
+Source code demonstrating deadlock issue:
+
+```java
+import java.util.concurrent.TimeUnit;
+
+public class DeadlockDemo {
+
+    private static final Object lock1 = new Object();
+    private static final Object lock2 = new Object();
+
+    public static void main(final String[] args) {
+        new Thread1().start();
+        new Thread2().start();
+    }
+
+    private static class Thread1 extends Thread {
+        public void run() {
+            synchronized (lock1) {
+                System.out.println("Thread 1: Has lock1");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(100L);
+                } catch (final InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                System.out.println("Thread 1: Waiting for lock2");
+                synchronized (lock2) {
+                    System.out.println("Thread 1: Has lock1 and lock2");
+                }
+                System.out.println("Thread 1: Released lock2");
+            }
+            System.out.println("Thread 1: Released lock1. Exiting...");
+        }
+    }
+
+    private static class Thread2 extends Thread {
+        public void run() {
+            synchronized (lock2) {
+                System.out.println("Thread 2: Has lock2");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(100L);
+                } catch (final InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Thread 2: Waiting for lock1");
+                synchronized (lock1) {
+                    System.out.println("Thread 2: Has lock1 and lock2");
+                }
+                System.out.println("Thread 2: released lock1");
+            }
+            System.out.println("Thread 2: Released lock2. Exiting...");
+        }
+    }
+
+}
+```
+
+`Thread1` acquires `lock1` and `Thread2` acquires `lock2`. Now both threads are waiting for other lock held by different
+thread causing deadlock.
+
+Output is stuck and application keeps on running (does not finish) with deadlock between 2 threads:
+
+```
+Thread 1: Has lock1
+Thread 2: Has lock2
+Thread 2: Waiting for lock1
+Thread 1: Waiting for lock2
+```
+
+**Solution**:
+
+Deadlock issue can be fixed by maintaining the same sequence for locks acquisition.
+
+Both `Thread1` and `Thread2` can acquire `lock1` and `lock2` in the **same** sequence thus avoiding the deadlock issue.
+
+```java
+import java.util.concurrent.TimeUnit;
+
+public class DeadlockDemo {
+
+    private static final Object lock1 = new Object();
+    private static final Object lock2 = new Object();
+
+    public static void main(final String[] args) {
+        new Thread1().start();
+        new Thread2().start();
+    }
+
+    private static class Thread1 extends Thread {
+        public void run() {
+            synchronized (lock1) {
+                System.out.println("Thread 1: Has lock1");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(100L);
+                } catch (final InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                System.out.println("Thread 1: Waiting for lock2");
+                synchronized (lock2) {
+                    System.out.println("Thread 1: Has lock1 and lock2");
+                }
+                System.out.println("Thread 1: Released lock2");
+            }
+            System.out.println("Thread 1: Released lock1. Exiting...");
+        }
+    }
+
+    private static class Thread2 extends Thread {
+        public void run() {
+            synchronized (lock1) {
+                System.out.println("Thread 2: Has lock1");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(100L);
+                } catch (final InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Thread 2: Waiting for lock2");
+                synchronized (lock2) {
+                    System.out.println("Thread 2: Has lock1 and lock2");
+                }
+                System.out.println("Thread 2: released lock2");
+            }
+            System.out.println("Thread 2: Released lock1. Exiting...");
+        }
+    }
+
+}
+```
+
+Output is correct now with no deadlock:
+
+```
+Thread 1: Has lock1
+Thread 1: Waiting for lock2
+Thread 1: Has lock1 and lock2
+Thread 1: Released lock2
+Thread 1: Released lock1. Exiting...
+Thread 2: Has lock1
+Thread 2: Waiting for lock2
+Thread 2: Has lock1 and lock2
+Thread 2: released lock2
+Thread 2: Released lock1. Exiting...
+```
+
+#### Thread coordination
