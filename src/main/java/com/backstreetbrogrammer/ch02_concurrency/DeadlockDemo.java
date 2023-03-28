@@ -45,7 +45,7 @@ public class DeadlockDemo {
                 synchronized (lock2) {
                     System.out.println("Thread 2: Has lock1 and lock2");
                 }
-                System.out.println("Thread 2: released lock2");
+                System.out.println("Thread 2: Released lock2");
             }
             System.out.println("Thread 2: Released lock1. Exiting...");
         }

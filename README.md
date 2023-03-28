@@ -1049,7 +1049,7 @@ public class DeadlockDemo {
                 synchronized (lock1) {
                     System.out.println("Thread 2: Has lock1 and lock2");
                 }
-                System.out.println("Thread 2: released lock1");
+                System.out.println("Thread 2: Released lock1");
             }
             System.out.println("Thread 2: Released lock2. Exiting...");
         }
@@ -1122,7 +1122,7 @@ public class DeadlockDemo {
                 synchronized (lock2) {
                     System.out.println("Thread 2: Has lock1 and lock2");
                 }
-                System.out.println("Thread 2: released lock2");
+                System.out.println("Thread 2: Released lock2");
             }
             System.out.println("Thread 2: Released lock1. Exiting...");
         }
@@ -1142,8 +1142,9 @@ Thread 1: Released lock1. Exiting...
 Thread 2: Has lock1
 Thread 2: Waiting for lock2
 Thread 2: Has lock1 and lock2
-Thread 2: released lock2
+Thread 2: Released lock2
 Thread 2: Released lock1. Exiting...
 ```
 
 #### Thread coordination
+
