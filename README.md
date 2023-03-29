@@ -1148,3 +1148,370 @@ Thread 2: Released lock1. Exiting...
 
 #### Thread coordination
 
+#### Interview Problem 6 (Barclays): How to stop a thread in Java?
+
+We should NOT use `Thread.stop()` method as it is deprecated. `Thread.stop()` can lead to monitored objects being
+corrupted, and it is inherently unsafe.
+
+- Use a thread-safe `boolean` variable to control thread execution
+
+Code snippet:
+
+```java
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public class StopThreadUsingBooleanDemo implements Runnable {
+    private final AtomicBoolean running = new AtomicBoolean(false); // can also use 'volatile'
+
+    @Override
+    public void run() {
+        running.set(true);
+        while (running.get()) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(1L);
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+            // do the thread task
+        }
+    }
+
+    public void stop() {
+        running.set(false);
+    }
+
+}
+```
+
+Now once the thread is created and started - we can call `stop()` method to stop the thread.
+
+```
+final Thread t1 = new Thread(new StopThreadUsingBooleanDemo());
+t1.start();
+...
+t1.stop(); // this will stop the thread t1
+```
+
+- Call `interrupt()` on a running thread
+
+It's very similar to the above boolean variable method.
+
+Code Snippet:
+
+```java
+import java.util.concurrent.TimeUnit;
+
+public class StopThreadUsingInterruptDemo implements Runnable {
+    @Override
+    public void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(1L);
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+            // do the thread task
+        }
+    }
+
+}
+```
+
+Now once the thread is created and started - we can call `interrupt()` method to stop the thread. The call to
+`interrupt()` method will cause the `isInterrupted()` method to return `true`.
+
+```
+final Thread t1 = new Thread(new StopThreadUsingInterruptDemo());
+t1.start();
+...
+t1.interrupt(); // this will cause the isInterrupted() method to return true
+```
+
+All the blocking methods like `wait(), notify(), notifyAll(), join(), sleep()` etc. throw `InterruptedException` based
+on the same `interrupted` status of thread.
+
+The interrupt mechanism is implemented using an internal flag known as the **interrupt status**.
+
+- Invoking **non-static** `Thread.interrupt()` sets this flag
+- When a thread checks for an interrupt by invoking the **static** method `Thread.interrupted()`, interrupt status is
+  cleared
+- The **non-static** `Thread.isInterrupted()` method, which is used by one thread to query the interrupt status of
+  another, does NOT change the interrupt status flag
+
+By convention, any method that exits by throwing an `InterruptedException` clears interrupt status when it does so.
+However, it's always possible that interrupt status will immediately be set again, by another thread invoking interrupt.
+
+#### Interview Problem 7 (Macquarie): Explain and Implement Producer Consumer pattern
+
+We have a buffer - it can be an array, list, set or queue. A producer produces values in a buffer. A consumer consumes
+the values from this buffer. Producers and Consumers are run in their own threads or thread pools.
+
+Buffer can be **bounded** (having a defined capacity) or **unbounded** (based on system memory available).
+
+Edge cases: the buffer can be full or empty => if it's full (bounded buffer) -> producers cannot write to it and if its
+empty, consumers can not read from it.
+
+- Implementation 1 - source code:
+
+**Producer**
+
+```java
+public class ProducerDemo1<T> {
+    private final T[] buffer;
+    private final int bufferSize;
+    private int count = 0;
+
+    public ProducerDemo1(final T[] buffer) {
+        if (buffer == null || buffer.length == 0) {
+            throw new IllegalArgumentException();
+        }
+        this.buffer = buffer;
+        this.bufferSize = buffer.length;
+    }
+
+    public void produce(final T item) {
+        while (isFull(buffer)) {
+            // wait
+        }
+        buffer[count++] = item;
+    }
+
+    private boolean isFull(final T[] buffer) {
+        return count >= (bufferSize - 1);
+    }
+
+}
+```
+
+**Consumer**
+
+```java
+public class ConsumerDemo1<T> {
+    private final T[] buffer;
+    private final int bufferSize;
+    private int count = 0;
+
+    public ConsumerDemo1(final T[] buffer) {
+        if (buffer == null || buffer.length == 0) {
+            throw new IllegalArgumentException();
+        }
+        this.buffer = buffer;
+        this.bufferSize = buffer.length;
+    }
+
+    public T consume() {
+        while (isEmpty(buffer)) {
+            // wait
+        }
+        return buffer[--count];
+    }
+
+    private boolean isEmpty(final T[] buffer) {
+        return count == 0;
+    }
+
+}
+```
+
+Major flaw in this code: as several threads are producing (writing) and consuming (popping) the buffer at the same time
+=> this will result in race condition. In other words, `buffer` and `count` variables are NOT thread-safe.
+
+- Implementation 2 - use **synchronization**:
+
+```
+    public synchronized void produce(final T item) {
+        while (isFull(buffer)) {
+            // wait
+        }
+        buffer[count++] = item;
+    }
+```
+
+```
+    public synchronized T consume() {
+        while (isEmpty(buffer)) {
+            // wait
+        }
+        return buffer[--count];
+    }
+```
+
+Using **synchronization** will help to fix the race condition problem => however, it will only synchronize all producer
+threads to call `produce()` and synchronize all consumer threads to call `consume()`. **Producer** and **Consumer**
+threads are still independent of each other and not synchronized across for both `produce()` and `consume()` methods. We
+want the **common** buffer to be thread safe for both `produce()` and `consume()` methods.
+
+- Implementation 3 - use **global lock** to be used by both Producer and Consumer:
+
+**Producer**
+
+```java
+public class ProducerDemo3<T> {
+    private final T[] buffer;
+    private final int bufferSize;
+    private final Object lock;
+    private int count = 0;
+
+    public ProducerDemo3(final T[] buffer, final Object lock) {
+        if (buffer == null || buffer.length == 0) {
+            throw new IllegalArgumentException();
+        }
+        this.buffer = buffer;
+        this.bufferSize = buffer.length;
+        this.lock = lock;
+    }
+
+    public void produce(final T item) {
+        synchronized (lock) {
+            while (isFull(buffer)) {
+                // wait
+            }
+            buffer[count++] = item;
+        }
+    }
+
+    private boolean isFull(final T[] buffer) {
+        return count >= (bufferSize - 1);
+    }
+
+}
+```
+
+**Consumer**
+
+```java
+public class ConsumerDemo3<T> {
+    private final T[] buffer;
+    private final int bufferSize;
+    private final Object lock;
+    private int count = 0;
+
+    public ConsumerDemo3(final T[] buffer, final Object lock) {
+        if (buffer == null || buffer.length == 0) {
+            throw new IllegalArgumentException();
+        }
+        this.buffer = buffer;
+        this.bufferSize = buffer.length;
+        this.lock = lock;
+    }
+
+    public T consume() {
+        synchronized (lock) {
+            while (isEmpty(buffer)) {
+                // wait
+            }
+            return buffer[--count];
+        }
+    }
+
+    private boolean isEmpty(final T[] buffer) {
+        return count == 0;
+    }
+
+}
+```
+
+Now both the `buffer` and Object `lock` are common to be used by both `Producer` and `Consumer`.
+
+However, still this design has a major flaw!
+
+Suppose if the buffer is empty => consumer thread will hold the lock object and keep on doing busy spinning inside:
+`while (isEmpty(buffer))`. Producer threads will keep on waiting for this lock object held by the consumer thread
+indefinitely and never be able to produce or write anything to buffer.
+
+**Solution**:
+
+We need a mechanism to somehow "park" this consumer thread when the buffer is empty and release the lock. Then the
+producer thread can acquire this lock and write to the buffer. When the "parked" consumer thread is woken up again - the
+buffer will not be empty this time, and it can consume the item.
+
+This is the `wait()` / `notify()` pattern.
+
+The `wait()`, `notify()` and `notifyAll()` methods are defined in `java.lang.Object` class. These methods are invoked on
+a given object => normally the object lock being used. The thread executing the invocation should hold that object key.
+Thus, in other words, these methods cannot be invoked outside a synchronized block.
+
+Calling `wait()` releases the key (object lock) held by this thread and puts the thread in **WAIT** state. The only way
+to release a thread from a **WAIT** state is to **notify** it.
+
+Calling `notify()` release a thread in **WAIT** state and puts it in **RUNNABLE** state. This is the only way to release
+a waiting thread. The released thread is chosen randomly. For `notifyAll()`, **all** the threads are moved from **WAIT**
+state to **RUNNABLE** state, however only one thread can acquire the lock again. However, the woken threads can do other
+task rather than waiting for the object again.
+
+**Producer**:
+
+```java
+public class ProducerDemo4<T> {
+    private final T[] buffer;
+    private final int bufferSize;
+    private final Object lock;
+    private int count = 0;
+
+    public ProducerDemo4(final T[] buffer, final Object lock) {
+        if (buffer == null || buffer.length == 0) {
+            throw new IllegalArgumentException();
+        }
+        this.buffer = buffer;
+        this.bufferSize = buffer.length;
+        this.lock = lock;
+    }
+
+    public void produce(final T item) throws InterruptedException {
+        synchronized (lock) {
+            try {
+                while (isFull(buffer)) {
+                    lock.wait();
+                }
+                buffer[count++] = item;
+            } finally {
+                lock.notifyAll();
+            }
+        }
+    }
+
+    private boolean isFull(final T[] buffer) {
+        return count >= (bufferSize - 1);
+    }
+
+}
+```
+
+**Consumer**:
+
+```java
+public class ConsumerDemo4<T> {
+    private final T[] buffer;
+    private final int bufferSize;
+    private final Object lock;
+    private int count = 0;
+
+    public ConsumerDemo4(final T[] buffer, final Object lock) {
+        if (buffer == null || buffer.length == 0) {
+            throw new IllegalArgumentException();
+        }
+        this.buffer = buffer;
+        this.bufferSize = buffer.length;
+        this.lock = lock;
+    }
+
+    public T consume() throws InterruptedException {
+        synchronized (lock) {
+            try {
+                while (isEmpty(buffer)) {
+                    lock.wait();
+                }
+                return buffer[--count];
+            } finally {
+                lock.notifyAll();
+            }
+        }
+    }
+
+    private boolean isEmpty(final T[] buffer) {
+        return count == 0;
+    }
+
+}
+```
