@@ -1515,3 +1515,38 @@ public class ConsumerDemo4<T> {
 
 }
 ```
+
+#### Thread states
+
+A thread has a state - for example, it can be running or not. We can get the thread state by calling `getState()`
+method on thread.
+
+```
+final Thread t1 = new Thread();
+...
+Thread.State state = t1.getState();
+```
+
+Java API already defines **enum** `Thread.State` as
+follows:  `public static enum Thread.State extends Enum<Thread. State>`
+
+A thread can be in one of the following states:
+
+- **NEW**: A thread that has not yet started is in this state.
+- **RUNNABLE**: A thread executing in the Java virtual machine is in this state.
+- **BLOCKED**: A thread that is blocked waiting for a monitor lock is in this state.
+- **WAITING**: A thread that is waiting indefinitely for another thread to perform a particular action is in this state.
+- **TIMED_WAITING**: A thread that is waiting for another thread to perform an action for up to a specified waiting time
+  is in this state.
+- **TERMINATED**: A thread that has exited is in this state.
+
+![Thread States](ThreadStates.PNG)
+
+A thread can be in only one state at a given point in time. These states are virtual machine states which do not reflect
+any operating system thread states.
+
+NOTE: If a thread is not running, can it be given hand by the thread scheduler ?
+
+Answer is **no** => thread scheduler will only schedule threads which are in **RUNNABLE** state.
+
+
