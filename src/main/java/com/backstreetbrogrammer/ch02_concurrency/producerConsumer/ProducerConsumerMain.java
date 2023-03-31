@@ -1,5 +1,7 @@
 package com.backstreetbrogrammer.ch02_concurrency.producerConsumer;
 
+import java.util.concurrent.TimeUnit;
+
 public class ProducerConsumerMain {
 
     private static final Object lock = new Object();
@@ -10,7 +12,7 @@ public class ProducerConsumerMain {
     private static class Producer {
         void produce() {
             synchronized (lock) {
-                if (isFull(buffer)) {
+                while (isFull(buffer)) {
                     try {
                         lock.wait();
                     } catch (final InterruptedException e) {
@@ -26,7 +28,7 @@ public class ProducerConsumerMain {
     private static class Consumer {
         void consume() {
             synchronized (lock) {
-                if (isEmpty()) {
+                while (isEmpty()) {
                     try {
                         lock.wait();
                     } catch (final InterruptedException e) {
@@ -47,35 +49,53 @@ public class ProducerConsumerMain {
         return count == buffer.length;
     }
 
+    private static Runnable createProducerTask(final Producer producer, final int num, final String name) {
+        return () -> {
+            for (int i = 0; i < num; i++) {
+                producer.produce();
+            }
+            System.out.printf("Done producing: %s%n", name);
+        };
+    }
+
+    private static Runnable createConsumerTask(final Consumer consumer, final int num, final String name) {
+        return () -> {
+            for (int i = 0; i < num; i++) {
+                consumer.consume();
+            }
+            System.out.printf("Done consuming: %s%n", name);
+        };
+    }
+
     public static void main(final String... strings) throws InterruptedException {
         buffer = new int[10];
         count = 0;
 
-        final Producer producer = new Producer();
-        final Consumer consumer = new Consumer();
-
-        final Runnable produceTask = () -> {
-            for (int i = 0; i < 30; i++) {
-                producer.produce();
-            }
-            System.out.println("Done producing");
+        final Thread[] producerThreads = new Thread[]{
+                new Thread(createProducerTask(new Producer(), 30, "Producer1")),
+                new Thread(createProducerTask(new Producer(), 20, "Producer2"))
+        };
+        final Thread[] consumerThreads = new Thread[]{
+                new Thread(createConsumerTask(new Consumer(), 20, "Consumer1")),
+                new Thread(createConsumerTask(new Consumer(), 15, "Consumer2")),
+                new Thread(createConsumerTask(new Consumer(), 10, "Consumer3"))
         };
 
-        final Runnable consumeTask = () -> {
-            for (int i = 0; i < 25; i++) {
-                consumer.consume();
-            }
-            System.out.println("Done consuming");
-        };
+        for (final Thread producer : producerThreads) {
+            producer.start();
+        }
+        for (final Thread consumer : consumerThreads) {
+            consumer.start();
+        }
 
-        final Thread consumerThread = new Thread(consumeTask);
-        final Thread producerThread = new Thread(produceTask);
+        TimeUnit.SECONDS.sleep(1L);
 
-        consumerThread.start();
-        producerThread.start();
-
-        consumerThread.join();
-        producerThread.join();
+        for (final Thread consumer : consumerThreads) {
+            consumer.join();
+        }
+        for (final Thread producer : producerThreads) {
+            producer.join();
+        }
 
         System.out.printf("Data in the buffer: %d%n", count);
     }

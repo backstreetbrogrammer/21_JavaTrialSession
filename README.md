@@ -19,6 +19,7 @@ Tools used:
 2. Introduction to Concurrency
     - Threading fundamentals
     - Thread coordination
+3. Introduction to Test-Driven Development (TDD)
 
 ---
 
@@ -1252,6 +1253,8 @@ Buffer can be **bounded** (having a defined capacity) or **unbounded** (based on
 Edge cases: the buffer can be full or empty => if it's full (bounded buffer) -> producers cannot write to it and if its
 empty, consumers can not read from it.
 
+![Producer Consumer](ProducerConsumer.PNG)
+
 - Implementation 1 - source code:
 
 **Producer**
@@ -1504,9 +1507,11 @@ public class ConsumerDemo4<T> {
 }
 ```
 
-Complete source code with Producer Consumer Pattern:
+**Complete running example of Producer-Consumer Pattern**:
 
 ```java
+import java.util.concurrent.TimeUnit;
+
 public class ProducerConsumerMain {
 
     private static final Object lock = new Object();
@@ -1517,7 +1522,7 @@ public class ProducerConsumerMain {
     private static class Producer {
         void produce() {
             synchronized (lock) {
-                if (isFull(buffer)) {
+                while (isFull(buffer)) {
                     try {
                         lock.wait();
                     } catch (final InterruptedException e) {
@@ -1533,7 +1538,7 @@ public class ProducerConsumerMain {
     private static class Consumer {
         void consume() {
             synchronized (lock) {
-                if (isEmpty()) {
+                while (isEmpty()) {
                     try {
                         lock.wait();
                     } catch (final InterruptedException e) {
@@ -1554,35 +1559,53 @@ public class ProducerConsumerMain {
         return count == buffer.length;
     }
 
+    private static Runnable createProducerTask(final Producer producer, final int num, final String name) {
+        return () -> {
+            for (int i = 0; i < num; i++) {
+                producer.produce();
+            }
+            System.out.printf("Done producing: %s%n", name);
+        };
+    }
+
+    private static Runnable createConsumerTask(final Consumer consumer, final int num, final String name) {
+        return () -> {
+            for (int i = 0; i < num; i++) {
+                consumer.consume();
+            }
+            System.out.printf("Done consuming: %s%n", name);
+        };
+    }
+
     public static void main(final String... strings) throws InterruptedException {
         buffer = new int[10];
         count = 0;
 
-        final Producer producer = new Producer();
-        final Consumer consumer = new Consumer();
-
-        final Runnable produceTask = () -> {
-            for (int i = 0; i < 30; i++) {
-                producer.produce();
-            }
-            System.out.println("Done producing");
+        final Thread[] producerThreads = new Thread[]{
+                new Thread(createProducerTask(new Producer(), 30, "Producer1")),
+                new Thread(createProducerTask(new Producer(), 20, "Producer2"))
+        };
+        final Thread[] consumerThreads = new Thread[]{
+                new Thread(createConsumerTask(new Consumer(), 20, "Consumer1")),
+                new Thread(createConsumerTask(new Consumer(), 15, "Consumer2")),
+                new Thread(createConsumerTask(new Consumer(), 10, "Consumer3"))
         };
 
-        final Runnable consumeTask = () -> {
-            for (int i = 0; i < 25; i++) {
-                consumer.consume();
-            }
-            System.out.println("Done consuming");
-        };
+        for (final Thread producer : producerThreads) {
+            producer.start();
+        }
+        for (final Thread consumer : consumerThreads) {
+            consumer.start();
+        }
 
-        final Thread consumerThread = new Thread(consumeTask);
-        final Thread producerThread = new Thread(produceTask);
+        TimeUnit.SECONDS.sleep(1L);
 
-        consumerThread.start();
-        producerThread.start();
-
-        consumerThread.join();
-        producerThread.join();
+        for (final Thread consumer : consumerThreads) {
+            consumer.join();
+        }
+        for (final Thread producer : producerThreads) {
+            producer.join();
+        }
 
         System.out.printf("Data in the buffer: %d%n", count);
     }
@@ -1593,8 +1616,11 @@ public class ProducerConsumerMain {
 Output:
 
 ```
-Done producing
-Done consuming
+Done consuming: Consumer1
+Done producing: Producer2
+Done consuming: Consumer3
+Done consuming: Consumer2
+Done producing: Producer1
 Data in the buffer: 5
 ```
 
@@ -1631,4 +1657,255 @@ NOTE: If a thread is not running, can it be given hand by the thread scheduler ?
 
 Answer is **no** => thread scheduler will only schedule threads which are in **RUNNABLE** state.
 
+---
+
+This is just about the introduction to concurrency we have covered in this free trial session.
+
+In the real module course - we will cover additional advanced topics on concurrency:
+
+- Thread pools
+- Concurrent Collections
+- Java Memory Model
+- Advanced Locking
+- Lock-Free Algorithms, Data Structures and Techniques
+- Fork-Join Framework
+
+---
+
+### Chapter 03. Introduction to Test-Driven Development (TDD)
+
+**Test-driven development (TDD)** is a software development process relying on software requirements being converted to
+test cases **before** software is fully developed, and tracking all software development by repeatedly testing the
+software against all test cases. This is as opposed to software being developed first and test cases created later.
+
+Test-driven development cycle:
+
+1. **Add a test**
+   The adding of a new feature begins by writing a test that passes if and only if the feature's specifications are met.
+   The developer can discover these specifications by asking about use cases and user stories. A key benefit of
+   test-driven development is that it makes the developer focus on requirements before writing code. This is in contrast
+   with the usual practice, where unit tests are only written after code.
+2. **Run all tests. The new test should fail for expected reasons**
+   This shows that new code is actually needed for the desired feature. It validates that the test harness is working
+   correctly. It rules out the possibility that the new test is flawed and will always pass.
+3. **Write the simplest code that passes the new test**
+   Inelegant or hard code is acceptable, as long as it passes the test. The code will be honed anyway in **Step 5**. No
+   code should be added beyond the tested functionality.
+4. **All tests should now pass**
+   If any fail, the new code must be revised until they pass. This ensures the new code meets the test requirements and
+   does not break existing features.
+5. **Refactor as needed, using tests after each refactor to ensure that functionality is preserved**
+   Code is refactored for readability and maintainability. In particular, hard-coded test data should be removed.
+   Running the test suite after each refactor helps ensure that no existing functionality is broken.
+    - Examples of refactoring:
+        - moving code to where it most logically belongs
+        - removing duplicate code
+        - making **names** self-documenting
+        - splitting methods into smaller pieces
+        - re-arranging inheritance hierarchies
+
+**Repeat**
+
+The cycle above is repeated for each new piece of functionality. Tests should be small and incremental, and commits made
+often. That way, if new code fails some tests, the programmer can simply undo or revert rather than debug excessively.
+
+#### Interview Problem 8 (UBS): Design Tic-Tac-Toe game using TDD
+
+Tic-tac-toe is a paper-and-pencil game for two players, **X** and **O**, who take turns marking the spaces in a **3×3**
+grid. The player who succeeds in placing three respective marks in a horizontal, vertical, or diagonal row, wins the
+game.
+
+**Requirement 1**: A piece can be placed on any empty space of a 3×3 board.
+
+We can split this requirement into **three** tests:
+
+- When a piece is placed anywhere outside the X axis, then `RuntimeException` is thrown.
+- When a piece is placed anywhere outside the Y axis, then `RuntimeException` is thrown.
+- When a piece is placed on an occupied space, then `RuntimeException` is thrown.
+
+**Solution 1**: Before we write any test, lets create our classes first.
+
+In `source` package:
+
+```java
+public class TicTacToe {
+
+}
+```
+
+In `test` package:
+
+```java
+import org.junit.jupiter.api.BeforeEach;
+
+public class TicTacToeTest {
+
+    private TicTacToe ticTacToe;
+
+    @BeforeEach
+    void setUp() {
+        ticTacToe = new TicTacToe();
+    }
+
+}
+```
+
+Write **Test Case 1**: When a piece is placed anywhere outside the X axis, then `RuntimeException` is thrown.
+
+```
+    @Test
+    @DisplayName("When a piece is placed outside the X axis, then RuntimeException is thrown")
+    void whenXOutsideBoardThenThrowRuntimeException() {
+        final Throwable exception = assertThrows(RuntimeException.class, () -> ticTacToe.play(6, 2));
+        assertEquals(exception.getMessage(), "X is outside board");
+    }
+```
+
+As `play()` method is not yet written in `TicTacToe` class, it will show compilation error. Thus, implement the
+`play()` method in `TicTacToe` class:
+
+```java
+public class TicTacToe {
+
+    public void play(final int x, final int y) {
+        if (x < 1 || x > 3) {
+            throw new RuntimeException("X is outside board");
+        }
+    }
+
+}
+```
+
+Now RUN the test case and it should PASS.
+
+Similarly, Write **Test Case 2**: When a piece is placed anywhere outside the Y axis, then `RuntimeException` is thrown.
+
+```
+    @Test
+    @DisplayName("When a piece is placed outside the Y axis, then RuntimeException is thrown")
+    void whenYOutsideBoardThenThrowRuntimeException() {
+        final Throwable exception = assertThrows(RuntimeException.class, () -> ticTacToe.play(2, 5));
+        assertEquals(exception.getMessage(), "Y is outside board");
+    }
+```
+
+RUN the test and it should FAIL.
+
+Implement the `play()` method to pass the test.
+
+```java
+public class TicTacToe {
+
+    public void play(final int x, final int y) {
+        if (x < 1 || x > 3) {
+            throw new RuntimeException("X is outside board");
+        } else if (y < 1 || y > 3) {
+            throw new RuntimeException("Y is outside board");
+        }
+    }
+
+}
+```
+
+RUN the test case and it should PASS.
+
+Write **Test Case 3**: When a piece is placed on an occupied space, then `RuntimeException` is thrown.
+
+```
+    @Test
+    @DisplayName("When a piece is placed on an occupied space, then RuntimeException is thrown")
+    void whenBoxOccupiedThenThrowRuntimeException() {
+        ticTacToe.play(1, 2);
+        final Throwable exception = assertThrows(RuntimeException.class, () -> ticTacToe.play(1, 2));
+        assertEquals(exception.getMessage(), "Box is already occupied");
+    }
+```
+
+RUN the test and it should FAIL.
+
+Implement the `play()` method to pass the test.
+
+```java
+public class TicTacToe {
+
+    private static final String EMPTY = "-1";
+
+    private final String[][] board = new String[][]{
+            {EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY}
+    };
+
+    public void play(final int x, final int y) {
+        if (x < 1 || x > 3) {
+            throw new RuntimeException("X is outside board");
+        } else if (y < 1 || y > 3) {
+            throw new RuntimeException("Y is outside board");
+        }
+        if (EMPTY.equals(board[x - 1][y - 1])) {
+            board[x - 1][y - 1] = "X";
+        } else {
+            throw new RuntimeException("Box is already occupied");
+        }
+    }
+
+}
+```
+
+RUN the test case and it should PASS.
+
+RUN all the test cases and all should PASS - the new test case implementations should not break the previous test cases.
+
+Now we have passed all the test cases - we should **REFACTOR** the code.
+
+- remove the duplicate code
+- segregate logic into methods to make it clean and more readable
+
+```java
+public class TicTacToe {
+
+    private static final String EMPTY = "-1";
+
+    private final String[][] board = new String[][]{
+            {EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY},
+            {EMPTY, EMPTY, EMPTY}
+    };
+
+    public void play(final int x, final int y) {
+        checkAxis(x, "X");
+        checkAxis(y, "Y");
+        setBox(x, y);
+    }
+
+    private void checkAxis(final int axis, final String axisName) {
+        if (axis < 1 || axis > 3) {
+            throw new RuntimeException(String.format("%s is outside board", axisName));
+        }
+    }
+
+    private void setBox(int x, int y) {
+        if (EMPTY.equals(board[x - 1][y - 1])) {
+            board[x - 1][y - 1] = "X";
+        } else {
+            throw new RuntimeException("Box is already occupied");
+        }
+    }
+
+}
+```
+
+We have completed **Requirement 1**.
+
+---
+
+**Requirement 2**: There should be a way to find out which player should play next.
+
+We can split this requirement into **three** tests:
+
+- The first turn should be played by played `X`.
+- If the last turn was played by `X`, then the next turn should be played by `O`.
+- If the last turn was played by `O`, then the next turn should be played by `X`.
+
+**Solution 2**:
 
