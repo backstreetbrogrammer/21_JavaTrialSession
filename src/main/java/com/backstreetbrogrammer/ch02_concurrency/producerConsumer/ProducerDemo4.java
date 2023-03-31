@@ -2,7 +2,6 @@ package com.backstreetbrogrammer.ch02_concurrency.producerConsumer;
 
 public class ProducerDemo4<T> {
     private final T[] buffer;
-    private final int bufferSize;
     private final Object lock;
     private int count = 0;
 
@@ -11,7 +10,6 @@ public class ProducerDemo4<T> {
             throw new IllegalArgumentException();
         }
         this.buffer = buffer;
-        this.bufferSize = buffer.length;
         this.lock = lock;
     }
 
@@ -29,7 +27,7 @@ public class ProducerDemo4<T> {
     }
 
     private boolean isFull(final T[] buffer) {
-        return count >= (bufferSize - 1);
+        return count == buffer.length;
     }
 
 }

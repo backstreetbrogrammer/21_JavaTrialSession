@@ -1259,7 +1259,6 @@ empty, consumers can not read from it.
 ```java
 public class ProducerDemo1<T> {
     private final T[] buffer;
-    private final int bufferSize;
     private int count = 0;
 
     public ProducerDemo1(final T[] buffer) {
@@ -1267,7 +1266,6 @@ public class ProducerDemo1<T> {
             throw new IllegalArgumentException();
         }
         this.buffer = buffer;
-        this.bufferSize = buffer.length;
     }
 
     public void produce(final T item) {
@@ -1278,7 +1276,7 @@ public class ProducerDemo1<T> {
     }
 
     private boolean isFull(final T[] buffer) {
-        return count >= (bufferSize - 1);
+        return count == buffer.length;
     }
 
 }
@@ -1289,7 +1287,6 @@ public class ProducerDemo1<T> {
 ```java
 public class ConsumerDemo1<T> {
     private final T[] buffer;
-    private final int bufferSize;
     private int count = 0;
 
     public ConsumerDemo1(final T[] buffer) {
@@ -1297,17 +1294,16 @@ public class ConsumerDemo1<T> {
             throw new IllegalArgumentException();
         }
         this.buffer = buffer;
-        this.bufferSize = buffer.length;
     }
 
     public T consume() {
-        while (isEmpty(buffer)) {
+        while (isEmpty()) {
             // wait
         }
         return buffer[--count];
     }
 
-    private boolean isEmpty(final T[] buffer) {
+    private boolean isEmpty() {
         return count == 0;
     }
 
@@ -1330,7 +1326,7 @@ Major flaw in this code: as several threads are producing (writing) and consumin
 
 ```
     public synchronized T consume() {
-        while (isEmpty(buffer)) {
+        while (isEmpty()) {
             // wait
         }
         return buffer[--count];
@@ -1349,7 +1345,6 @@ want the **common** buffer to be thread safe for both `produce()` and `consume()
 ```java
 public class ProducerDemo3<T> {
     private final T[] buffer;
-    private final int bufferSize;
     private final Object lock;
     private int count = 0;
 
@@ -1358,7 +1353,6 @@ public class ProducerDemo3<T> {
             throw new IllegalArgumentException();
         }
         this.buffer = buffer;
-        this.bufferSize = buffer.length;
         this.lock = lock;
     }
 
@@ -1372,7 +1366,7 @@ public class ProducerDemo3<T> {
     }
 
     private boolean isFull(final T[] buffer) {
-        return count >= (bufferSize - 1);
+        return count == buffer.length;
     }
 
 }
@@ -1383,7 +1377,6 @@ public class ProducerDemo3<T> {
 ```java
 public class ConsumerDemo3<T> {
     private final T[] buffer;
-    private final int bufferSize;
     private final Object lock;
     private int count = 0;
 
@@ -1392,20 +1385,19 @@ public class ConsumerDemo3<T> {
             throw new IllegalArgumentException();
         }
         this.buffer = buffer;
-        this.bufferSize = buffer.length;
         this.lock = lock;
     }
 
     public T consume() {
         synchronized (lock) {
-            while (isEmpty(buffer)) {
+            while (isEmpty()) {
                 // wait
             }
             return buffer[--count];
         }
     }
 
-    private boolean isEmpty(final T[] buffer) {
+    private boolean isEmpty() {
         return count == 0;
     }
 
@@ -1445,7 +1437,6 @@ task rather than waiting for the object again.
 ```java
 public class ProducerDemo4<T> {
     private final T[] buffer;
-    private final int bufferSize;
     private final Object lock;
     private int count = 0;
 
@@ -1454,7 +1445,6 @@ public class ProducerDemo4<T> {
             throw new IllegalArgumentException();
         }
         this.buffer = buffer;
-        this.bufferSize = buffer.length;
         this.lock = lock;
     }
 
@@ -1472,7 +1462,7 @@ public class ProducerDemo4<T> {
     }
 
     private boolean isFull(final T[] buffer) {
-        return count >= (bufferSize - 1);
+        return count == buffer.length;
     }
 
 }
@@ -1483,7 +1473,6 @@ public class ProducerDemo4<T> {
 ```java
 public class ConsumerDemo4<T> {
     private final T[] buffer;
-    private final int bufferSize;
     private final Object lock;
     private int count = 0;
 
@@ -1492,14 +1481,13 @@ public class ConsumerDemo4<T> {
             throw new IllegalArgumentException();
         }
         this.buffer = buffer;
-        this.bufferSize = buffer.length;
         this.lock = lock;
     }
 
     public T consume() throws InterruptedException {
         synchronized (lock) {
             try {
-                while (isEmpty(buffer)) {
+                while (isEmpty()) {
                     lock.wait();
                 }
                 return buffer[--count];
@@ -1509,11 +1497,105 @@ public class ConsumerDemo4<T> {
         }
     }
 
-    private boolean isEmpty(final T[] buffer) {
+    private boolean isEmpty() {
         return count == 0;
     }
 
 }
+```
+
+Complete source code with Producer Consumer Pattern:
+
+```java
+public class ProducerConsumerMain {
+
+    private static final Object lock = new Object();
+
+    private static int[] buffer;
+    private static int count;
+
+    private static class Producer {
+        void produce() {
+            synchronized (lock) {
+                if (isFull(buffer)) {
+                    try {
+                        lock.wait();
+                    } catch (final InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                buffer[count++] = 1;
+                lock.notifyAll();
+            }
+        }
+    }
+
+    private static class Consumer {
+        void consume() {
+            synchronized (lock) {
+                if (isEmpty()) {
+                    try {
+                        lock.wait();
+                    } catch (final InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                buffer[--count] = 0;
+                lock.notifyAll();
+            }
+        }
+    }
+
+    private static boolean isEmpty() {
+        return count == 0;
+    }
+
+    private static boolean isFull(final int[] buffer) {
+        return count == buffer.length;
+    }
+
+    public static void main(final String... strings) throws InterruptedException {
+        buffer = new int[10];
+        count = 0;
+
+        final Producer producer = new Producer();
+        final Consumer consumer = new Consumer();
+
+        final Runnable produceTask = () -> {
+            for (int i = 0; i < 30; i++) {
+                producer.produce();
+            }
+            System.out.println("Done producing");
+        };
+
+        final Runnable consumeTask = () -> {
+            for (int i = 0; i < 25; i++) {
+                consumer.consume();
+            }
+            System.out.println("Done consuming");
+        };
+
+        final Thread consumerThread = new Thread(consumeTask);
+        final Thread producerThread = new Thread(produceTask);
+
+        consumerThread.start();
+        producerThread.start();
+
+        consumerThread.join();
+        producerThread.join();
+
+        System.out.printf("Data in the buffer: %d%n", count);
+    }
+
+}
+```
+
+Output:
+
+```
+Done producing
+Done consuming
+Data in the buffer: 5
 ```
 
 #### Thread states

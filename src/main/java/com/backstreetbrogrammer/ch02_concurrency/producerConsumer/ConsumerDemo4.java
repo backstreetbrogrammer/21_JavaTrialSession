@@ -2,7 +2,6 @@ package com.backstreetbrogrammer.ch02_concurrency.producerConsumer;
 
 public class ConsumerDemo4<T> {
     private final T[] buffer;
-    private final int bufferSize;
     private final Object lock;
     private int count = 0;
 
@@ -11,14 +10,13 @@ public class ConsumerDemo4<T> {
             throw new IllegalArgumentException();
         }
         this.buffer = buffer;
-        this.bufferSize = buffer.length;
         this.lock = lock;
     }
 
     public T consume() throws InterruptedException {
         synchronized (lock) {
             try {
-                while (isEmpty(buffer)) {
+                while (isEmpty()) {
                     lock.wait();
                 }
                 return buffer[--count];
@@ -28,7 +26,7 @@ public class ConsumerDemo4<T> {
         }
     }
 
-    private boolean isEmpty(final T[] buffer) {
+    private boolean isEmpty() {
         return count == 0;
     }
 
