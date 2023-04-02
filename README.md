@@ -1884,7 +1884,7 @@ public class TicTacToe {
         }
     }
 
-    private void setBox(int x, int y) {
+    private void setBox(final int x, final int y) {
         if (EMPTY.equals(board[x - 1][y - 1])) {
             board[x - 1][y - 1] = "X";
         } else {
@@ -1909,3 +1909,417 @@ We can split this requirement into **three** tests:
 
 **Solution 2**:
 
+Write **Test Case 1**: The first turn should be played by played `X`.
+
+```
+    @Test
+    @DisplayName("The first turn should be played by player X")
+    void firstTurnShouldBePlayerX() {
+        assertEquals("X", ticTacToe.nextPlayer());
+    }
+```
+
+As `nextPlayer()` method is not yet written in `TicTacToe` class, it will show compilation error. Thus, implement the
+`nextPlayer()` method in `TicTacToe` class:
+
+```
+    public String nextPlayer() {
+        return "X";
+    }
+```
+
+RUN the test case and it should PASS.
+
+Now, we should make sure that players are changing. After `X` is finished, it should be `O`'s turn, then again `X`, and
+so on.
+
+Write both the test cases as it will require the same implementation:
+
+- If the last turn was played by `X`, then the next turn should be played by `O`.
+- If the last turn was played by `O`, then the next turn should be played by `X`.
+
+```
+    @Test
+    @DisplayName("If the last turn was played by X, then the next turn should be played by O")
+    void ifLastPlayerXThenNextPlayerIsO() {
+        ticTacToe.play(1, 2); // this will be X
+        assertEquals("O", ticTacToe.nextPlayer());
+    }
+
+    @Test
+    @DisplayName("If the last turn was played by O, then the next turn should be played by X")
+    void ifLastPlayerOThenNextPlayerIsX() {
+        ticTacToe.play(1, 2); // this will be X
+        ticTacToe.play(2, 1); // this will be O
+        assertEquals("X", ticTacToe.nextPlayer());
+    }
+```
+
+RUN the test case and it should FAIL.
+
+Let's implement the code to pass it.
+
+```
+    private String lastPlayer = "";
+
+    public void play(final int x, final int y) {
+        checkAxis(x, "X");
+        checkAxis(y, "Y");
+        setBox(x, y);
+        lastPlayer = nextPlayer();
+    }
+
+    public String nextPlayer() {
+        if ("X".equals(lastPlayer)) {
+            return "O";
+        }
+        return "X";
+    }
+```
+
+RUN the test case and it should PASS.
+
+Now we see that the 2 test cases are redundant and require same implementation. Thus, we can remove one of it.
+
+Removed:
+
+```
+    @Test
+    @DisplayName("If the last turn was played by X, then the next turn should be played by O")
+    void ifLastPlayerXThenNextPlayerIsO() {
+        ticTacToe.play(1, 2); // this will be X
+        assertEquals("O", ticTacToe.nextPlayer());
+    }
+```
+
+Now, can we REFACTOR the code? - YES. Let's use `enum` for players as it can be only `X` or `O` being played.
+
+```
+    enum Player {
+        X("X"),
+        O("O"),
+        UNKNOWN("Unknown");
+
+        private final String player;
+
+        Player(final String player) {
+            this.player = player;
+        }
+
+        public static Player fromPlayer(final String player) {
+            return Arrays.stream(values())
+                         .filter(pl -> pl.player.equals(player))
+                         .findFirst()
+                         .orElse(UNKNOWN);
+        }
+
+        @Override
+        public String toString() {
+            return player;
+        }
+    }
+
+    private Player lastPlayer = Player.UNKNOWN;
+    
+    public void play(final int x, final int y) {
+        checkAxis(x, "X");
+        checkAxis(y, "Y");
+        setBox(x, y);
+        lastPlayer = Player.fromPlayer(nextPlayer());
+    }
+
+    public String nextPlayer() {
+        if (lastPlayer == Player.X) {
+            return Player.O.player;
+        }
+        return Player.X.player;
+    }
+```
+
+RUN all the test cases and all should PASS.
+
+We have completed **Requirement 2**.
+
+---
+
+**Requirement 3**: A player wins by being the first to connect a line of friendly pieces from one side or corner of the
+board to the other.
+
+We should verify horizontal, vertical, and diagonal lines.
+
+- Test Case 1: If no winning condition is fulfilled, then there is no winner.
+
+```
+    @Test
+    @DisplayName("If no winning condition is fulfilled, then there is no winner")
+    public void ifNoWinningConditionThenNoWinner()
+    {
+        final String actual = ticTacToe.play(1,2);
+        assertEquals("No winner", actual);
+    }
+```
+
+As `play()` method is not returning `String` in `TicTacToe` class, it will show compilation error.
+
+Let's change the method to return `String`.
+
+```
+    public String play(final int x, final int y) {
+        checkAxis(x, "X");
+        checkAxis(y, "Y");
+        setBox(x, y);
+        lastPlayer = Player.fromPlayer(nextPlayer());
+        return "No winner";
+    }
+```
+
+RUN the test case and it should PASS.
+
+- Test Case 2: The player wins when the whole horizontal line is occupied by her pieces
+
+```
+    @Test
+    @DisplayName("The player wins when the whole horizontal line is occupied by her pieces")
+    public void whenWholeHorizontalLineIsOccupiedByXThenXIsWinner() {
+        ticTacToe.play(1, 1); // X
+        ticTacToe.play(1, 2); // O
+        ticTacToe.play(2, 1); // X
+        ticTacToe.play(2, 2); // O
+        String actual = ticTacToe.play(3, 1); // X
+        assertEquals("X is the winner", actual);
+    }
+```
+
+We need to introduce not only which board boxes are empty, but also which player played them.
+
+```
+    public String play(final int x, final int y) {
+        checkAxis(x, "X");
+        checkAxis(y, "Y");
+        setBox(x, y);
+        lastPlayer = Player.fromPlayer(nextPlayer());
+        for (int index = 0; index < 3; index++) {
+            if (board[0][index].equals(lastPlayer.player) &&
+                    board[1][index].equals(lastPlayer.player) &&
+                    board[2][index].equals(lastPlayer.player)) {
+                return String.format("%s is the winner", lastPlayer);
+            }
+        }
+        return "No winner";
+    }
+```
+
+RUN the test case and it should PASS.
+
+REFACTOR the code.
+
+```
+    public String play(final int x, final int y) {
+        checkAxis(x, "X");
+        checkAxis(y, "Y");
+        lastPlayer = Player.fromPlayer(nextPlayer());
+        setBox(x, y, lastPlayer);
+        return hasWin() ? String.format("%s is the winner", lastPlayer) : "No winner";
+    }
+
+    private boolean hasWin() {
+        for (int index = 0; index < 3; index++) {
+            if (board[0][index].equals(lastPlayer.player) &&
+                    board[1][index].equals(lastPlayer.player) &&
+                    board[2][index].equals(lastPlayer.player)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void setBox(final int x, final int y, final Player lastPlayer) {
+        if (EMPTY.equals(board[x - 1][y - 1])) {
+            board[x - 1][y - 1] = lastPlayer.player;
+        } else {
+            throw new RuntimeException("Box is already occupied");
+        }
+    }
+```
+
+- Test Case 3: The player wins when the whole vertical line is occupied by her pieces
+
+This is quite similar to the previous test case for horizontal line.
+
+```
+    @Test
+    @DisplayName("The player wins when the whole vertical line is occupied by her pieces")
+    public void whenWholeVerticalLineIsOccupiedByXThenXIsWinner() {
+        ticTacToe.play(1, 1); // X
+        ticTacToe.play(2, 1); // O
+        ticTacToe.play(1, 2); // X
+        ticTacToe.play(2, 2); // O
+        String actual = ticTacToe.play(1, 3); // X
+        assertEquals("X is the winner", actual);
+    }
+```
+
+We need to change the index to check for vertical.
+
+```
+    private boolean hasWin() {
+        boolean hasWin = false;
+        for (int index = 0; index < 3; index++) {
+            // horizontal
+            if (board[0][index].equals(lastPlayer.player) &&
+                    board[1][index].equals(lastPlayer.player) &&
+                    board[2][index].equals(lastPlayer.player)) {
+                hasWin = true;
+                break;
+            } else if (board[index][0].equals(lastPlayer.player) &&
+                    board[index][1].equals(lastPlayer.player) &&
+                    board[index][2].equals(lastPlayer.player)) { // vertical
+                hasWin = true;
+                break;
+            }
+        }
+        return hasWin;
+    }
+```
+
+RUN the test case and it should PASS.
+
+- Test Case 4: The player wins when the whole diagonal line from the top-left to bottom-right is occupied by her pieces
+
+```
+    @Test
+    @DisplayName("The player wins when the whole diagonal line from the top-left to bottom-right is occupied by her pieces")
+    public void whenWholeDiagonalLineFromTopLeftToBottomRightIsOccupiedByXThenXIsWinner() {
+        ticTacToe.play(1, 1); // X
+        ticTacToe.play(1, 2); // O
+        ticTacToe.play(2, 2); // X
+        ticTacToe.play(1, 3); // O
+        String actual = ticTacToe.play(3, 3); // X
+        assertEquals("X is the winner", actual);
+    }
+```
+
+RUN the test case and it should FAIL.
+
+We do not need to check in the loop and can simply have a check for top-left to bottom-right boxes.
+
+```
+    private boolean hasWin() {
+        for (int index = 0; index < 3; index++) {
+            // horizontal
+            if (board[0][index].equals(lastPlayer.player) &&
+                    board[1][index].equals(lastPlayer.player) &&
+                    board[2][index].equals(lastPlayer.player)) {
+                return true;
+            } else if (board[index][0].equals(lastPlayer.player) &&
+                    board[index][1].equals(lastPlayer.player) &&
+                    board[index][2].equals(lastPlayer.player)) { // vertical
+                return true;
+            }
+        }
+
+        if (board[0][2].equals(lastPlayer.player) &&
+                board[1][1].equals(lastPlayer.player) &&
+                board[2][0].equals(lastPlayer.player)) { // diagonal - topLeft to rightBottom
+            return true;
+        }
+
+        return false;
+    }
+```
+
+RUN the test case and it should PASS.
+
+- Test Case 5: The player wins when the whole diagonal line from the top-right to bottom-left is occupied by her pieces
+
+```
+    @Test
+    @DisplayName("The player wins when the whole diagonal line from the top-right to bottom-left is occupied by her pieces")
+    public void whenWholeDiagonalLineFromTopRightToBottomLeftIsOccupiedByXThenXIsWinner() {
+        ticTacToe.play(3, 3); // X
+        ticTacToe.play(1, 2); // O
+        ticTacToe.play(2, 2); // X
+        ticTacToe.play(1, 3); // O
+        String actual = ticTacToe.play(1, 1); // X
+        assertEquals("X is the winner", actual);
+    }
+```
+
+RUN the test case and it should FAIL.
+
+The implementation is very much similar to previous test case.
+
+```
+    private boolean hasWin() {
+        for (int index = 0; index < 3; index++) {
+            // horizontal
+            if (board[0][index].equals(lastPlayer.player) &&
+                    board[1][index].equals(lastPlayer.player) &&
+                    board[2][index].equals(lastPlayer.player)) {
+                return true;
+            } else if (board[index][0].equals(lastPlayer.player) &&
+                    board[index][1].equals(lastPlayer.player) &&
+                    board[index][2].equals(lastPlayer.player)) { // vertical
+                return true;
+            }
+        }
+
+        if (board[0][2].equals(lastPlayer.player) &&
+                board[1][1].equals(lastPlayer.player) &&
+                board[2][0].equals(lastPlayer.player)) { // diagonal - topLeft to bottomRight
+            return true;
+        }
+
+        if (board[2][2].equals(lastPlayer.player) &&
+                board[1][1].equals(lastPlayer.player) &&
+                board[0][0].equals(lastPlayer.player)) { // diagonal - topRight to bottomLeft
+            return true;
+        }
+
+        return false;
+    }
+```
+
+The `hasWin()` method is getting too verbose and a lot of return breaks - let's REFACTOR the code.
+
+```
+    private boolean hasWin() {
+        return horizontalWinCheck() || verticalWinCheck() || diagonalWinCheck();
+    }
+
+    private boolean horizontalWinCheck() {
+        for (int index = 0; index < 3; index++) {
+            if (board[0][index].equals(lastPlayer.player) &&
+                    board[1][index].equals(lastPlayer.player) &&
+                    board[2][index].equals(lastPlayer.player)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean verticalWinCheck() {
+        for (int index = 0; index < 3; index++) {
+            if (board[index][0].equals(lastPlayer.player) &&
+                    board[index][1].equals(lastPlayer.player) &&
+                    board[index][2].equals(lastPlayer.player))
+                return true;
+        }
+        return false;
+    }
+
+    private boolean diagonalWinCheck() {
+        return (board[0][2].equals(lastPlayer.player) &&
+                board[1][1].equals(lastPlayer.player) &&
+                board[2][0].equals(lastPlayer.player)) // topLeft to bottomRight
+                || (board[2][2].equals(lastPlayer.player) &&
+                board[1][1].equals(lastPlayer.player) &&
+                board[0][0].equals(lastPlayer.player)); // topRight to bottomLeft
+    }
+```
+
+RUN all the test cases and all should PASS.
+
+We have completed **Requirement 3**.
+
+---

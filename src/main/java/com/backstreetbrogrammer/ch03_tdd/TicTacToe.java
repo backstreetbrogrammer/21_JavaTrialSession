@@ -1,8 +1,36 @@
 package com.backstreetbrogrammer.ch03_tdd;
 
+import java.util.Arrays;
+
 public class TicTacToe {
 
     private static final String EMPTY = "-1";
+
+    enum Player {
+        X("X"),
+        O("O"),
+        UNKNOWN("Unknown");
+
+        private final String player;
+
+        Player(final String player) {
+            this.player = player;
+        }
+
+        public static Player fromPlayer(final String player) {
+            return Arrays.stream(values())
+                         .filter(pl -> pl.player.equals(player))
+                         .findFirst()
+                         .orElse(UNKNOWN);
+        }
+
+        @Override
+        public String toString() {
+            return player;
+        }
+    }
+
+    private Player lastPlayer = Player.UNKNOWN;
 
     private final String[][] board = new String[][]{
             {EMPTY, EMPTY, EMPTY},
@@ -10,10 +38,46 @@ public class TicTacToe {
             {EMPTY, EMPTY, EMPTY}
     };
 
-    public void play(final int x, final int y) {
+    public String play(final int x, final int y) {
         checkAxis(x, "X");
         checkAxis(y, "Y");
-        setBox(x, y);
+        lastPlayer = Player.fromPlayer(nextPlayer());
+        setBox(x, y, lastPlayer);
+        return hasWin() ? String.format("%s is the winner", lastPlayer) : "No winner";
+    }
+
+    private boolean hasWin() {
+        return horizontalWinCheck() || verticalWinCheck() || diagonalWinCheck();
+    }
+
+    private boolean horizontalWinCheck() {
+        for (int index = 0; index < 3; index++) {
+            if (board[0][index].equals(lastPlayer.player) &&
+                    board[1][index].equals(lastPlayer.player) &&
+                    board[2][index].equals(lastPlayer.player)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean verticalWinCheck() {
+        for (int index = 0; index < 3; index++) {
+            if (board[index][0].equals(lastPlayer.player) &&
+                    board[index][1].equals(lastPlayer.player) &&
+                    board[index][2].equals(lastPlayer.player))
+                return true;
+        }
+        return false;
+    }
+
+    private boolean diagonalWinCheck() {
+        return (board[0][2].equals(lastPlayer.player) &&
+                board[1][1].equals(lastPlayer.player) &&
+                board[2][0].equals(lastPlayer.player)) // topLeft to bottomRight
+                || (board[2][2].equals(lastPlayer.player) &&
+                board[1][1].equals(lastPlayer.player) &&
+                board[0][0].equals(lastPlayer.player)); // topRight to bottomLeft
     }
 
     private void checkAxis(final int axis, final String axisName) {
@@ -22,12 +86,19 @@ public class TicTacToe {
         }
     }
 
-    private void setBox(int x, int y) {
+    private void setBox(final int x, final int y, final Player lastPlayer) {
         if (EMPTY.equals(board[x - 1][y - 1])) {
-            board[x - 1][y - 1] = "X";
+            board[x - 1][y - 1] = lastPlayer.player;
         } else {
             throw new RuntimeException("Box is already occupied");
         }
+    }
+
+    public String nextPlayer() {
+        if (lastPlayer == Player.X) {
+            return Player.O.player;
+        }
+        return Player.X.player;
     }
 
 }
