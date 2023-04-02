@@ -43,7 +43,26 @@ public class TicTacToe {
         checkAxis(y, "Y");
         lastPlayer = Player.fromPlayer(nextPlayer());
         setBox(x, y, lastPlayer);
-        return hasWin() ? String.format("%s is the winner", lastPlayer) : "No winner";
+        final String result;
+        if (hasWin()) {
+            result = String.format("%s is the winner", lastPlayer);
+        } else if (isDraw()) {
+            result = "The result is draw";
+        } else {
+            result = "No winner";
+        }
+        return result;
+    }
+
+    private boolean isDraw() {
+        for (int x = 0; x < 3; x++) {
+            for (int y = 0; y < 3; y++) {
+                if (EMPTY.equals(board[x][y])) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private boolean hasWin() {
