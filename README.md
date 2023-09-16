@@ -24,9 +24,9 @@ Tools used:
 
 ---
 
-### Chapter 01. Introduction to Lambdas
+## Chapter 01. Introduction to Lambdas
 
-#### Lambda Expressions and Functional Interfaces
+### Lambda Expressions and Functional Interfaces
 
 Lambda expressions basically express instances of **functional interfaces**.
 
@@ -146,7 +146,7 @@ hello students!!
 
 ![Lambda Syntax](LambdaSyntax.PNG)
 
-#### Exploring `java.util.function` package
+### Exploring `java.util.function` package
 
 JDK has more than 40 interfaces in `java.util.function` package organized in 4 categories:
 
@@ -155,7 +155,7 @@ JDK has more than 40 interfaces in `java.util.function` package organized in 4 c
 - Predicate
 - Function
 
-#### Supplier
+### Supplier
 
 The `Supplier`
 
@@ -172,7 +172,7 @@ public interface Supplier<T> {
 Supplier<String> supplier = () -> "Hello";
 ```
 
-#### Consumer
+### Consumer
 
 The `Consumer`
 
@@ -189,7 +189,7 @@ public interface Consumer<T> {
 Consumer<String> consumer = s -> System.out.println(s);
 ```
 
-#### Predicate
+### Predicate
 
 The `Predicate`
 
@@ -208,7 +208,7 @@ public interface Predicate<T> {
 Predicate<String> isEmpty = s -> s.isEmpty();
 ```
 
-#### Function
+### Function
 
 The `Function`
 
@@ -227,7 +227,7 @@ public interface Function<T, R> {
 Function<Student, String> getStudentId = student -> student.getId();
 ```
 
-#### Runnable
+### Runnable
 
 Although `Runnable` interface lies in `java.lang` package, it is still a functional interface. Thus, any interface which
 has ONLY ONE abstract method is always a functional interface and annotating with `@FunctionalInterface` is optional.
@@ -249,7 +249,7 @@ public interface Runnable {
 Runnable runMe = () -> System.out.println("I am running in a separate thread");
 ```
 
-#### Interview Problem 1 (Societe Generale): Demonstrate functional interfaces in code
+### Interview Problem 1 (Societe Generale): Demonstrate functional interfaces in code
 
 Given a **Java POJO**:
 
@@ -374,7 +374,7 @@ Tatiana
 ----------------------
 ```
 
-#### Lambdas vs Anonymous classes
+### Lambdas vs Anonymous classes
 
 Prior to Java 8, the primary means of creating a **function object** was the **anonymous class**.
 
@@ -502,7 +502,7 @@ i = 10
 PI = 4
 ```
 
-#### Chaining and Composing Lambdas
+### Chaining and Composing Lambdas
 
 We can create new lambdas by combining existing lambdas:
 
@@ -580,7 +580,7 @@ c2 consumer prints as lower case: hello students
 ------------------------
 ```
 
-#### Interview Problem 2 (Societe Generale - Follow up for Problem 1): Demonstrate combining lambdas
+### Interview Problem 2 (Societe Generale - Follow up for Problem 1): Demonstrate combining lambdas
 
 Given a POJO class:
 
@@ -710,9 +710,9 @@ In the real module course - we will cover additional topics on lambdas:
 
 ---
 
-### Chapter 02. Introduction to Concurrency
+## Chapter 02. Introduction to Concurrency
 
-#### Threading fundamentals
+### Threading fundamentals
 
 In computer science, **concurrency** is the execution of the multiple instruction sequences at the **same** time.
 
@@ -766,7 +766,7 @@ interleaving of multiple threads or processes.
 In simpler words, it means that two different threads are trying to **read** and **write** the **same** variable at
 the **same** time.
 
-#### Interview Problem 3 (Macquarie, Merrill Lynch): Demonstrate race condition in Singleton pattern and how to fix it
+### Interview Problem 3 (Macquarie, Merrill Lynch): Demonstrate race condition in Singleton pattern and how to fix it
 
 Given source code for Singleton pattern:
 
@@ -910,7 +910,7 @@ public class CreateThreadDemo {
 I am running in this thread: MyThread
 ```
 
-#### Interview Problem 4 (JP Morgan Chase): Demonstrate synchronization issue and fix the code
+### Interview Problem 4 (JP Morgan Chase): Demonstrate synchronization issue and fix the code
 
 Given Java Code:
 
@@ -998,7 +998,7 @@ Counter Value = 1000000
 Counter Value = 1000000
 ```
 
-#### Interview Problem 5 (Goldman Sachs): Demonstrate deadlock issue and fix the code
+### Interview Problem 5 (Goldman Sachs): Demonstrate deadlock issue and fix the code
 
 Write a program to demonstrate deadlock issue where a thread `T1` holds a key needed by a thread `T2`, and `T2` holds
 the key needed by `T1`. Fix the code.
@@ -1148,9 +1148,9 @@ Thread 2: Released lock2
 Thread 2: Released lock1. Exiting...
 ```
 
-#### Thread coordination
+### Thread coordination
 
-#### Interview Problem 6 (Barclays): How to stop a thread in Java?
+### Interview Problem 6 (Barclays): How to stop a thread in Java?
 
 We should NOT use `Thread.stop()` method as it is deprecated. `Thread.stop()` can lead to monitored objects being
 corrupted, and it is inherently unsafe.
@@ -1244,7 +1244,7 @@ The interrupt mechanism is implemented using an internal flag known as the **int
 By convention, any method that exits by throwing an `InterruptedException` clears interrupt status when it does so.
 However, it's always possible that interrupt status will immediately be set again, by another thread invoking interrupt.
 
-#### Interview Problem 7 (Macquarie): Explain and Implement Producer Consumer pattern
+### Interview Problem 7 (Macquarie): Explain and Implement Producer Consumer pattern
 
 We have a buffer - it can be an array, list, set or queue. A producer produces values in a buffer. A consumer consumes
 the values from this buffer. Producers and Consumers are run in their own threads or thread pools.
@@ -1625,7 +1625,7 @@ Done producing: Producer1
 Data in the buffer: 5
 ```
 
-#### Thread states
+### Thread states
 
 A thread has a state - for example, it can be running or not. We can get the thread state by calling `getState()`
 method on thread.
@@ -1637,7 +1637,7 @@ Thread.State state = t1.getState();
 ```
 
 Java API already defines **enum** `Thread.State` as
-follows:  `public static enum Thread.State extends Enum<Thread. State>`
+follows:  `public static enum Thread.State extends Enum<Thread.State>`
 
 A thread can be in one of the following states:
 
@@ -1673,7 +1673,7 @@ In the real module course - we will cover additional advanced topics on concurre
 
 ---
 
-### Chapter 03. Introduction to Test-Driven Development (TDD)
+## Chapter 03. Introduction to Test-Driven Development (TDD)
 
 **Test-driven development (TDD)** is a software development process relying on software requirements being converted to
 test cases **before** software is fully developed, and tracking all software development by repeatedly testing the
@@ -1710,7 +1710,7 @@ Test-driven development cycle:
 The cycle above is repeated for each new piece of functionality. Tests should be small and incremental, and commits made
 often. That way, if new code fails some tests, the programmer can simply undo or revert rather than debug excessively.
 
-#### Interview Problem 8 (UBS): Design Tic-Tac-Toe game using TDD
+### Interview Problem 8 (UBS): Design Tic-Tac-Toe game using TDD
 
 Tic-tac-toe is a paper-and-pencil game for two players, **X** and **O**, who take turns marking the spaces in a **3×3**
 grid. The player who succeeds in placing three respective marks in a horizontal, vertical, or diagonal row, wins the
