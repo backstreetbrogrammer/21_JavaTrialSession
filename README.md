@@ -14,13 +14,26 @@ Tools used:
 1. [Introduction to Lambdas](https://github.com/backstreetbrogrammer/21_JavaTrialSession#chapter-01-introduction-to-lambdas)
     - [Lambda Expressions and Functional Interfaces](https://github.com/backstreetbrogrammer/21_JavaTrialSession#lambda-expressions-and-functional-interfaces)
     - [Exploring `java.util.function` package](https://github.com/backstreetbrogrammer/21_JavaTrialSession#exploring-javautilfunction-package)
-    - Lambdas vs Anonymous classes
-    - Chaining and Composing Lambdas
-2. Introduction to Concurrency
-    - Threading fundamentals
-    - Thread coordination
-3. Introduction to Test-Driven Development (TDD)
-    - Development of Tic-Tac-Toe game using TDD
+        - [Supplier](https://github.com/backstreetbrogrammer/21_JavaTrialSession#supplier)
+        - [Consumer](https://github.com/backstreetbrogrammer/21_JavaTrialSession#consumer)
+        - [Predicate](https://github.com/backstreetbrogrammer/21_JavaTrialSession#predicate)
+        - [Function](https://github.com/backstreetbrogrammer/21_JavaTrialSession#function)
+        - [Runnable](https://github.com/backstreetbrogrammer/21_JavaTrialSession#runnable)
+    - [Interview Problem 1 (Societe Generale): Demonstrate functional interfaces in code](https://github.com/backstreetbrogrammer/21_JavaTrialSession#interview-problem-1-societe-generale-demonstrate-functional-interfaces-in-code)
+    - [Lambdas vs Anonymous classes](https://github.com/backstreetbrogrammer/21_JavaTrialSession#lambdas-vs-anonymous-classes)
+    - [Chaining and Composing Lambdas](https://github.com/backstreetbrogrammer/21_JavaTrialSession#chaining-and-composing-lambdas)
+    - [Interview Problem 2 (Societe Generale - Follow up for Problem 1): Demonstrate combining lambdas](https://github.com/backstreetbrogrammer/21_JavaTrialSession#interview-problem-2-societe-generale---follow-up-for-problem-1-demonstrate-combining-lambdas)
+2. [Introduction to Concurrency](https://github.com/backstreetbrogrammer/21_JavaTrialSession#chapter-02-introduction-to-concurrency)
+    - [Threading fundamentals](https://github.com/backstreetbrogrammer/21_JavaTrialSession#threading-fundamentals)
+    - [Interview Problem 3 (Macquarie, Merrill Lynch): Demonstrate race condition in Singleton pattern and how to fix it](https://github.com/backstreetbrogrammer/21_JavaTrialSession#interview-problem-3-macquarie-merrill-lynch-demonstrate-race-condition-in-singleton-pattern-and-how-to-fix-it)
+    - [Interview Problem 4 (JP Morgan Chase): Demonstrate synchronization issue and fix the code](https://github.com/backstreetbrogrammer/21_JavaTrialSession#interview-problem-4-jp-morgan-chase-demonstrate-synchronization-issue-and-fix-the-code)
+    - [Interview Problem 5 (Goldman Sachs): Demonstrate deadlock issue and fix the code](https://github.com/backstreetbrogrammer/21_JavaTrialSession#interview-problem-5-goldman-sachs-demonstrate-deadlock-issue-and-fix-the-code)
+    - [Thread coordination](https://github.com/backstreetbrogrammer/21_JavaTrialSession#thread-coordination)
+    - [Interview Problem 6 (Barclays): How to stop a thread in Java?](https://github.com/backstreetbrogrammer/21_JavaTrialSession#interview-problem-6-barclays-how-to-stop-a-thread-in-java)
+    - [Interview Problem 7 (Macquarie): Explain and Implement Producer Consumer pattern](https://github.com/backstreetbrogrammer/21_JavaTrialSession#interview-problem-7-macquarie-explain-and-implement-producer-consumer-pattern)
+    - [Thread states](https://github.com/backstreetbrogrammer/21_JavaTrialSession#thread-states)
+3. [Introduction to Test-Driven Development (TDD)](https://github.com/backstreetbrogrammer/21_JavaTrialSession#chapter-03-introduction-to-test-driven-development-tdd)
+    - [Interview Problem 8 (UBS): Design Tic-Tac-Toe game using TDD](https://github.com/backstreetbrogrammer/21_JavaTrialSession#interview-problem-8-ubs-design-tic-tac-toe-game-using-tdd)
 
 ---
 
