@@ -11,9 +11,9 @@ Tools used:
 
 ## Table of contents
 
-1. Introduction to Lambdas
-    - Lambda Expressions and Functional Interfaces
-    - Exploring `java.util.function` package
+1. [Introduction to Lambdas](https://github.com/backstreetbrogrammer/21_JavaTrialSession#chapter-01-introduction-to-lambdas)
+    - [Lambda Expressions and Functional Interfaces](https://github.com/backstreetbrogrammer/21_JavaTrialSession#lambda-expressions-and-functional-interfaces)
+    - [Exploring `java.util.function` package](https://github.com/backstreetbrogrammer/21_JavaTrialSession#exploring-javautilfunction-package)
     - Lambdas vs Anonymous classes
     - Chaining and Composing Lambdas
 2. Introduction to Concurrency
@@ -155,7 +155,7 @@ JDK has more than 40 interfaces in `java.util.function` package organized in 4 c
 - Predicate
 - Function
 
-### Supplier
+#### Supplier
 
 The `Supplier`
 
@@ -172,7 +172,7 @@ public interface Supplier<T> {
 Supplier<String> supplier = () -> "Hello";
 ```
 
-### Consumer
+#### Consumer
 
 The `Consumer`
 
@@ -189,7 +189,7 @@ public interface Consumer<T> {
 Consumer<String> consumer = s -> System.out.println(s);
 ```
 
-### Predicate
+#### Predicate
 
 The `Predicate`
 
@@ -208,7 +208,7 @@ public interface Predicate<T> {
 Predicate<String> isEmpty = s -> s.isEmpty();
 ```
 
-### Function
+#### Function
 
 The `Function`
 
@@ -227,7 +227,7 @@ public interface Function<T, R> {
 Function<Student, String> getStudentId = student -> student.getId();
 ```
 
-### Runnable
+#### Runnable
 
 Although `Runnable` interface lies in `java.lang` package, it is still a functional interface. Thus, any interface which
 has ONLY ONE abstract method is always a functional interface and annotating with `@FunctionalInterface` is optional.
